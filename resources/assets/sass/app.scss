@@ -1,0 +1,15 @@
+
+// Fonts
+@import url("https://fonts.googleapis.com/css?family=Raleway:300,400,600");
+
+// Variables
+@import "variables";
+
+// Bootstrap
+//@import "~bootstrap-sass/assets/stylesheets/bootstrap";
+
+//Semantic UI
+@import "~semantic-ui-sass/semantic-ui";
+.ui.menu {
+  border-radius: 0;
+}
