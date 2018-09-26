@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use PHPUnit\Runner\Exception;
 use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Notification;
 
 class ApiController extends Controller
 {
@@ -163,6 +165,18 @@ class ApiController extends Controller
         return $response;
     }
 
+    public function subjectById($subject_id)
+    {
+        try {
+            $subject_data = DB::table('subjects')
+                ->where('subject_id', $subject_id)->first();
+            $response = $subject_data;
+        } catch (Exception $exception) {
+            $response = $this->buildJsonResponse('Error', $exception->getMessage());
+        }
+        return $response;
+    }
+
     public function addViolation()
     {
         try {
@@ -206,12 +220,57 @@ class ApiController extends Controller
                     "course" => $violation->course_name,
                     "section" => $violation->current_section,
                     "violation" => $violation->violation_type,
-                    "subject" => $violation->subject_name
+                    "subject" => $violation->subject_name,
+                    "violation_id" => $violation->violation_id
                 ];
                 array_push($data, $build);
             }
             $response = $this->buildJsonResponse('Success', "Fetching all violations history.",$data);
         } catch (Exception $exception) {
+            $response = $this->buildJsonResponse('Error', $exception->getMessage());
+        }
+        return $response;
+    }
+
+    public function violationsById(Request $request) {
+        try {
+            $vid = $request->input('vid');
+            $data = [];
+            $violation_data = DB::table('violations')
+                ->leftJoin('students_data', 'violations.student_data_id', '=', 'students_data.student_data_id')
+                ->leftJoin('student_details', 'students_data.student_details_id', '=', 'student_details.student_detail_id')
+                ->leftJoin('courses', 'students_data.course', '=', 'courses.course_id')
+                ->leftJoin('subjects', 'violations.subject', '=', 'subjects.subject_id')
+                ->where('violations.violation_id', $vid)
+                ->get();
+            foreach ($violation_data as $violation) {
+                $middlename = ($violation->middlename != "N/A") ? $violation->middlename : "";
+                $build = [
+                    "name" => $violation->lastname . ", " . $violation->firstname . " " . $middlename,
+                    "id_number" => $violation->student_id_number,
+                    "course" => $violation->course_name,
+                    "section" => $violation->current_section,
+                    "violation" => $violation->violation_type,
+                    "subject" => $violation->subject_name,
+                    "violation_id" => $violation->violation_id,
+                    "violation_comment" => $violation->violation_comment,
+                    "violation_occur" => date_format(date_create($violation->violation_occur), 'F d, Y/h a')
+                ];
+                $data = $build;
+            }
+            $response = $this->buildJsonResponse('Success', "Fetching violation.", $data);
+        } catch (Exception $exception) {
+            $response = $this->buildJsonResponse('Error', $exception->getMessage());
+        }
+        return $response;
+    }
+
+    public function removeViolationById(Request $request) {
+        try {
+            $vid = $request->input('vid');
+            DB::table('violations')->where('violation_id', '=', $vid)->delete();
+            $response = $this->buildJsonResponse('Success', "Removing violation.", []);
+        }catch (Exception $exception) {
             $response = $this->buildJsonResponse('Error', $exception->getMessage());
         }
         return $response;
@@ -236,6 +295,22 @@ class ApiController extends Controller
         return $response;
     }
 
+    public function violationByStudentId(Request $request)
+    {
+        try {
+            $student_id = $request->input('student_id');
+            $violation_data = DB::table('violations')
+                ->leftJoin('subjects', 'violations.subject', '=', 'subjects.subject_id')
+                ->where('student_data_id', $student_id)
+                ->orderBy('violation_id', 'desc')
+                ->get();
+            $response = $this->buildJsonResponse('Success', "Fetching student violations.", $violation_data);
+        } catch (Exception $exception) {
+            $response = $this->buildJsonResponse('Error', $exception->getMessage());
+        }
+        return $response;
+    }
+
     public function fetchStudentById()
     {
         try {
@@ -245,6 +320,64 @@ class ApiController extends Controller
                 ->leftJoin('courses', 'students_data.course', '=', 'courses.course_id')
                 ->where('student_data_id', $data_id)->first();
             $response = $this->buildJsonResponse('Success', "Fetching student data.", $students_data);
+        } catch (Exception $exception) {
+            $response = $this->buildJsonResponse('Error', $exception->getMessage());
+        }
+        return $response;
+    }
+
+    public function updateStudent(Request $request)
+    {
+        try {
+            date_default_timezone_set('Asia/Manila');
+            $current_date = date('Y-m-d H:i:s', time());
+            $data_request = $request->input('data');
+
+            DB::table('students_data')
+                ->where('student_data_id', $data_request['student_data_id'])
+                ->update([
+                    'student_id_number' => $data_request['id_number'],
+                    'current_section' => $data_request['section'],
+                    'modified_at' => $current_date
+                ]);
+
+            DB::table('student_details')
+                ->where('student_detail_id', $data_request['student_detail_id'])
+                ->update([
+                    'gender' => $data_request['gender'],
+                    'address' => $data_request['personal_address'],
+                    'birth_date' => $data_request['birth_date'],
+                    'mobile_number' => $data_request['mobile_number'],
+                    'contact_email' => $data_request['email'],
+                    'guardian_name' => $data_request['guardian_name'],
+                    'guardian_contact_number' => $data_request['guardian_contact'],
+                    'guardian_address' => $data_request['guardian_address'],
+                    'guardian_email' => $data_request['guardian_email'],
+                    'modified_at' => $current_date
+                ]);
+
+            $response = $this->buildJsonResponse('Success', "Fetching update student data.", []);
+        } catch (Exception $exception) {
+            $response = $this->buildJsonResponse('Error', $exception->getMessage());
+        }
+        return $response;
+    }
+
+    public function sendEmailNotice(Request $request) {
+        try {
+            $email = $request->input('email');
+            $data = [
+                'violation' => $request->input('violation'),
+                'count' => $request->input('count'),
+                'yr_sem' => $request->input('yr_sem'),
+                'subject' => $request->input('subject'),
+                'type' => $request->input('type'),
+                'guardian_name' => $request->input('guardian_name'),
+                'gender' => $request->input('gender'),
+                'std_fullname' => $request->input('std_fullname')
+            ];
+            $api_resp = Mail::to($email)->send(new Notification($data));
+            $response = $this->buildJsonResponse('Success', "Sending email notice.", $api_resp);
         } catch (Exception $exception) {
             $response = $this->buildJsonResponse('Error', $exception->getMessage());
         }

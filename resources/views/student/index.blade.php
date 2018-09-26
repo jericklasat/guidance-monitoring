@@ -76,29 +76,29 @@
                 },
                 columns: [
                     { data: "student_id_number",
-                        render: function (nTd, sData, oData, iRow, iCol) {
+                        render: function (nTd, sData, oData) {
                             return "<strong>SN: </strong>" + oData[0];
                         }
                     },
                     { data: "fullname",
-                        render: function (nTd, sData, oData, iRow, iCol) {
+                        render: function (nTd, sData, oData) {
                             return oData[1];
                         }
                     },
                     { data: "course",
-                        render: function (nTd, sData, oData, iRow, iCol) {
+                        render: function (nTd, sData, oData) {
                             return oData[2];
                         }
                     },
                     { data: "section",
-                        render: function (nTd, sData, oData, iRow, iCol) {
+                        render: function (nTd, sData, oData) {
                             return oData[3];
                         }
                     },
                     { data: "action",
-                        render: function (nTd, sData, oData, iRow, iCol) {
+                        render: function (nTd, sData, oData) {
                             return '<div class="ui small buttons">' +
-                                '<button class="ui button" id="data-update-trigger' + oData[4] + '" data-std_data_id="' + oData[4] + '"><i class="icon edit"></i></button>' +
+                                '<a href="{{ route('student_update') }}/'+oData[4]+'" class="ui button" id="data-update-trigger' + oData[4] + '" data-std_data_id="' + oData[4] + '"><i class="icon edit"></i></a>' +
                                 '<div class="or"></div>' +
                                 '<a href="{{ route('student_single') }}/'+oData[4]+'" class="ui button green" ><i class="icon info"></i></a>' +
                                 '</div>';

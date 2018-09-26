@@ -31,7 +31,7 @@
             Violations History
         </div>
         <div class="ui segment " id="violation-hst-cont">
-            <div class="right ui rail" style="">
+            <div class="right ui rail">
                 <div class="ui sticky">
                     <div class="ui vertical menu">
                         <a class="active teal item">
@@ -61,6 +61,7 @@
                     <th>Section</th>
                     <th>Violation</th>
                     <th>Subject</th>
+                    <th>View</th>
                 </thead>
                 <tbody></tbody>
                 <tfoot>
@@ -70,6 +71,7 @@
                     <th>Section</th>
                     <th>Violation</th>
                     <th>Subject</th>
+                    <th>View</th>
                 </tfoot>
             </table>
         </div>
@@ -110,14 +112,17 @@
 
             var violation_table = $('#violation-history').DataTable({
                 deferRender: true,
-                ajax: function ( data,callback,settings ) {
+                ajax: function ( data,callback) {
                     var build = [];
                     HTTP_MANAGER.executeGet('/violation/history').done(function(response) {
                         if (response.data.status === "Success") {
                             response.data.payload.forEach(function (value) {
-                                var aa = Object.keys(value).map(function(e) {
+                                var aa = Object.keys(value).map(function(e, i) {
+                                    if (i === (Object.keys(value).length - 1)) {
+                                        return '<a href="{{ route('view_violation') }}/'+ value[e] +'">View</a>';
+                                    }
                                     return value[e];
-                                })
+                                });
                                 build.push(aa);
                             });
                         }
@@ -133,14 +138,14 @@
 
             var student_table = $('#students-data').DataTable({
                 deferRender: true,
-                ajax: function ( data,callback,settings ) {
+                ajax: function ( data,callback) {
                     var build = [];
                     HTTP_MANAGER.executeGet('/retrieve/students').done(function(response){
                         if (response.data.status === "Success") {
                             response.data.payload.forEach(function (value) {
                                 var aa = Object.keys(value).map(function(e) {
                                     return value[e];
-                                })
+                                });
                                 build.push(aa);
                             });
                         }
@@ -178,9 +183,9 @@
 
             HTTP_MANAGER.executeGet('/violation/total').done(function(response){
                 if (response.data.status === "Success") {
-                    $('#absences-tag').html(response.data.payload.Absent)
-                    $('#misbehaviour-tag').html(response.data.payload.Behaviour)
-                    $('#late-tag').html(response.data.payload.Tardiness)
+                    $('#absences-tag').html(response.data.payload.Absent);
+                    $('#misbehaviour-tag').html(response.data.payload.Behaviour);
+                    $('#late-tag').html(response.data.payload.Tardiness);
                     $('#violations-tag').html( ( parseInt(response.data.payload.Absent) + parseInt(response.data.payload.Behaviour) + parseInt(response.data.payload.Tardiness) ) );
                 }
             });

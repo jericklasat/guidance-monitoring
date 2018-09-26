@@ -28,16 +28,16 @@
                 <form class="ui form" id="registration-form" method="post" style="width: 100%;">
                     <div class="ui card" style="width: 100%;">
                         <div class="content">
-                            <div class="header">
-                                <img id="profile-picture" src="https://semantic-ui.com/examples/assets/images/wireframe/square-image.png" class="ui small centered fluid image" style="display: block;">
-                                <div class="ui middle aligned center aligned grid container">
+                            {{--<div class="header">--}}
+                                {{--<img id="profile-picture" src="https://semantic-ui.com/examples/assets/images/wireframe/square-image.png" class="ui small centered fluid image" style="display: block;">--}}
+                                {{--<div class="ui middle aligned center aligned grid container">--}}
                                         {{--<input type="file" (change)="fileEvent($event)" class="inputfile" id="embedpollfileinput" accept="image/x-png,image/gif,image/jpeg" />--}}
                                         {{--<label for="embedpollfileinput" class="ui small primary button">--}}
                                             {{--<i class="ui upload icon"></i>--}}
                                             {{--Upload image--}}
                                         {{--</label>--}}
-                                </div>
-                            </div>
+                                {{--</div>--}}
+                            {{--</div>--}}
                             <h3 class="ui dividing header">Student Information</h3>
                             <div class="description">
                                 <div class="field">
